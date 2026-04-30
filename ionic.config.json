@@ -1,0 +1,7 @@
+{
+  "name": "VookmeWalletApp",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "react-vite"
+}
