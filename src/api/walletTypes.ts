@@ -54,6 +54,7 @@ export interface WalletAppHomeResponse {
   customer: WalletAppCustomerDto;
   rewardSummary: WalletAppRewardSummaryDto;
   giftCardSummary: WalletAppGiftCardSummaryDto;
+  promoSummary: WalletAppPromoSummaryDto;
   recentActivities: WalletAppActivityDto[];
   favoriteStores: WalletAppStoreDto[];
   qrAvailable: boolean;
@@ -75,6 +76,9 @@ export interface WalletAppRewardAccountDto {
   scopeLabel: string;
   pointBalance: number;
   rewardValue: number;
+  cardUrl: string;
+  qrPayload: string;
+  codeLast4: string;
 }
 
 export interface WalletAppGiftCardSummaryDto {
@@ -89,11 +93,36 @@ export interface WalletAppGiftCardDto {
   storeId: number;
   storeName: string;
   codeLast4: string;
+  redeemCode: string;
+  publicCardUrl: string;
+  qrPayload: string;
   initialAmount: number;
   balanceAmount: number;
   statusText: string;
   issuedAtUtc: string;
   expiresAtUtc?: string | null;
+}
+
+export interface WalletAppPromoSummaryDto {
+  totalCount: number;
+  activeCount: number;
+  offers: WalletAppPromoOfferDto[];
+}
+
+export interface WalletAppPromoOfferDto {
+  customerOfferId: number;
+  storeId: number;
+  storeName: string;
+  offerName: string;
+  benefitText: string;
+  code: string;
+  qrPayload: string;
+  channelText: string;
+  issuedAtUtc: string;
+  expiresAtUtc?: string | null;
+  isInStoreRedeemable: boolean;
+  isOnlineOrderRedeemable: boolean;
+  isReservationRedeemable: boolean;
 }
 
 export interface WalletAppActivityDto {
@@ -105,6 +134,7 @@ export interface WalletAppActivityDto {
   balanceAfter?: number | null;
   note: string;
   createdAtUtc: string;
+  codeLast4?: string | null;
 }
 
 export interface WalletAppQrResponse {
@@ -127,4 +157,5 @@ export interface WalletAppStoreDto {
   reservationUrl: string;
   rewardsEnabled: boolean;
   giftCardsEnabled: boolean;
+  promosEnabled: boolean;
 }

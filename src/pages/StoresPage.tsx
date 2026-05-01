@@ -1,33 +1,11 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import {
-  IonBadge,
-  IonButton,
-  IonCard,
-  IonCardContent,
-  IonContent,
-  IonHeader,
-  IonIcon,
-  IonInfiniteScroll,
-  IonInfiniteScrollContent,
-  IonItem,
-  IonLabel,
-  IonList,
-  IonPage,
-  IonSearchbar,
-  IonSkeletonText,
-  IonText,
-  IonTitle,
-  IonToast,
-  IonToolbar,
-} from '@ionic/react';
-import { giftOutline, locationOutline, refreshOutline, ribbonOutline } from 'ionicons/icons';
+import { IonBadge, IonButton, IonCard, IonCardContent, IonContent, IonHeader, IonIcon, IonInfiniteScroll, IonInfiniteScrollContent, IonItem, IonLabel, IonList, IonPage, IonSearchbar, IonSkeletonText, IonText, IonTitle, IonToast, IonToolbar } from '@ionic/react';
+import { giftOutline, locationOutline, pricetagOutline, refreshOutline, ribbonOutline } from 'ionicons/icons';
 import { walletApi } from '../api/walletApi';
 import { WalletAppPagedResponse, WalletAppStoreDto } from '../api/walletTypes';
 import { useWalletAuth } from '../context/WalletAuthContext';
 import './Wallet.css';
-
 const PAGE_SIZE = 20;
-
 const StoresPage: React.FC = () => {
   const { apiBaseUrl, authFetch } = useWalletAuth();
   const [query, setQuery] = useState('');
@@ -36,123 +14,11 @@ const StoresPage: React.FC = () => {
   const [pageInfo, setPageInfo] = useState<WalletAppPagedResponse<WalletAppStoreDto> | null>(null);
   const [loading, setLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState('');
-
-  const loadStores = useCallback(
-    async (page = 1, append = false) => {
-      if (!append) setLoading(true);
-
-      try {
-        const response = await authFetch((token) => walletApi.stores(apiBaseUrl, token, query, location, page, PAGE_SIZE));
-        const data = response.data;
-        setPageInfo(data ?? null);
-        setStores((current) => (append ? [...current, ...(data?.rows ?? [])] : data?.rows ?? []));
-      } catch (error) {
-        setToastMessage(error instanceof Error ? error.message : 'Stores could not be loaded.');
-      } finally {
-        setLoading(false);
-      }
-    },
-    [apiBaseUrl, authFetch, location, query]
-  );
-
-  useEffect(() => {
-    void loadStores(1, false);
-  }, [loadStores]);
-
+  const loadStores = useCallback(async (page = 1, append = false) => { if (!append) setLoading(true); try { const response = await authFetch((token) => walletApi.stores(apiBaseUrl, token, query, location, page, PAGE_SIZE)); const data = response.data; setPageInfo(data ?? null); setStores((current) => append ? [...current, ...(data?.rows ?? [])] : data?.rows ?? []); } catch (error) { setToastMessage(error instanceof Error ? error.message : 'Stores could not be loaded.'); } finally { setLoading(false); } }, [apiBaseUrl, authFetch, location, query]);
+  useEffect(() => { void loadStores(1, false); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
   const hasMore = pageInfo ? pageInfo.page < pageInfo.totalPages : false;
-
-  const handleLoadMore = async (event: CustomEvent<void>) => {
-    if (pageInfo && pageInfo.page < pageInfo.totalPages) {
-      await loadStores(pageInfo.page + 1, true);
-    }
-    (event.target as HTMLIonInfiniteScrollElement).complete();
-  };
-
-  const handleSearch = async () => {
-    await loadStores(1, false);
-  };
-
-  return (
-    <IonPage>
-      <IonHeader translucent>
-        <IonToolbar>
-          <IonTitle>Stores</IonTitle>
-          <IonButton slot="end" fill="clear" onClick={() => loadStores(1, false)} aria-label="Refresh stores">
-            <IonIcon icon={refreshOutline} />
-          </IonButton>
-        </IonToolbar>
-      </IonHeader>
-
-      <IonContent fullscreen className="wallet-page-bg">
-        <div className="wallet-content-wrap">
-          <IonCard className="wallet-card wallet-search-card">
-            <IonCardContent>
-              <IonSearchbar
-                value={query}
-                debounce={0}
-                placeholder="Search stores"
-                onIonInput={(event) => setQuery(String(event.detail.value ?? ''))}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter') void handleSearch();
-                }}
-              />
-              <IonSearchbar
-                value={location}
-                debounce={0}
-                placeholder="City or state"
-                onIonInput={(event) => setLocation(String(event.detail.value ?? ''))}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter') void handleSearch();
-                }}
-              />
-              <IonButton expand="block" onClick={handleSearch}>Search</IonButton>
-            </IonCardContent>
-          </IonCard>
-
-          {loading && <IonSkeletonText animated className="wallet-list-skeleton" />}
-
-          {!loading && stores.length === 0 && (
-            <IonCard className="wallet-card">
-              <IonCardContent>
-                <IonText color="medium">No stores found.</IonText>
-              </IonCardContent>
-            </IonCard>
-          )}
-
-          {!loading && stores.length > 0 && (
-            <IonList className="wallet-store-list">
-              {stores.map((store) => (
-                <IonItem lines="none" className="wallet-store-item" key={store.storeId}>
-                  <div className="wallet-store-avatar" slot="start">{store.storeName.substring(0, 1).toUpperCase()}</div>
-                  <IonLabel>
-                    <h3>{store.storeName}</h3>
-                    <p>
-                      <IonIcon icon={locationOutline} /> {store.cityState || store.businessTypeName || 'Vookme store'}
-                    </p>
-                    <div className="wallet-store-badges">
-                      {store.rewardsEnabled && <IonBadge color="success"><IonIcon icon={ribbonOutline} /> Rewards</IonBadge>}
-                      {store.giftCardsEnabled && <IonBadge color="warning"><IonIcon icon={giftOutline} /> Gift Cards</IonBadge>}
-                    </div>
-                  </IonLabel>
-                </IonItem>
-              ))}
-            </IonList>
-          )}
-        </div>
-
-        <IonInfiniteScroll disabled={!hasMore} onIonInfinite={handleLoadMore}>
-          <IonInfiniteScrollContent loadingText="Loading more stores..." />
-        </IonInfiniteScroll>
-
-        <IonToast
-          isOpen={Boolean(toastMessage)}
-          message={toastMessage}
-          duration={2600}
-          onDidDismiss={() => setToastMessage('')}
-        />
-      </IonContent>
-    </IonPage>
-  );
+  const handleLoadMore = async (event: CustomEvent<void>) => { if (pageInfo && pageInfo.page < pageInfo.totalPages) await loadStores(pageInfo.page + 1, true); (event.target as HTMLIonInfiniteScrollElement).complete(); };
+  const handleSearch = async () => { await loadStores(1, false); };
+  return <IonPage><IonHeader translucent><IonToolbar><IonTitle>Stores</IonTitle><IonButton slot="end" fill="clear" onClick={() => loadStores(1, false)} aria-label="Refresh stores"><IonIcon icon={refreshOutline} /></IonButton></IonToolbar></IonHeader><IonContent fullscreen className="wallet-page-bg"><div className="wallet-content-wrap"><IonCard className="wallet-card wallet-search-card"><IonCardContent><IonSearchbar value={query} debounce={0} placeholder="Search stores" onIonInput={(event) => setQuery(String(event.detail.value ?? ''))} onKeyDown={(event) => { if (event.key === 'Enter') void handleSearch(); }} /><IonSearchbar value={location} debounce={0} placeholder="City or state" onIonInput={(event) => setLocation(String(event.detail.value ?? ''))} onKeyDown={(event) => { if (event.key === 'Enter') void handleSearch(); }} /><IonButton expand="block" onClick={handleSearch}>Search</IonButton></IonCardContent></IonCard>{loading && <IonSkeletonText animated className="wallet-list-skeleton" />}{!loading && stores.length === 0 && <IonCard className="wallet-card"><IonCardContent><IonText color="medium">No stores found.</IonText></IonCardContent></IonCard>}{!loading && stores.length > 0 && <IonList className="wallet-store-list">{stores.map((store) => <IonItem lines="none" className="wallet-store-item" key={store.storeId}><div className="wallet-store-avatar" slot="start">{store.storeName.substring(0, 1).toUpperCase()}</div><IonLabel><h3>{store.storeName}</h3><p><IonIcon icon={locationOutline} /> {store.cityState || store.businessTypeName || 'Vookme store'}</p><div className="wallet-store-badges">{store.rewardsEnabled && <IonBadge color="success"><IonIcon icon={ribbonOutline} /> Rewards</IonBadge>}{store.giftCardsEnabled && <IonBadge color="warning"><IonIcon icon={giftOutline} /> Gift Cards</IonBadge>}{store.promosEnabled && <IonBadge color="tertiary"><IonIcon icon={pricetagOutline} /> Promos</IonBadge>}</div></IonLabel></IonItem>)}</IonList>}</div><IonInfiniteScroll disabled={!hasMore} onIonInfinite={handleLoadMore}><IonInfiniteScrollContent loadingText="Loading more stores..." /></IonInfiniteScroll><IonToast isOpen={Boolean(toastMessage)} message={toastMessage} duration={2600} onDidDismiss={() => setToastMessage('')} /></IonContent></IonPage>;
 };
-
 export default StoresPage;
