@@ -1,89 +1,309 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { IonBadge, IonButton, IonCard, IonCardContent, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonModal, IonPage, IonRefresher, IonRefresherContent, IonSegment, IonSegmentButton, IonSkeletonText, IonText, IonTitle, IonToast, IonToolbar } from '@ionic/react';
-import { giftOutline, logOutOutline, pricetagOutline, ribbonOutline, storefrontOutline } from 'ionicons/icons';
+import {
+  IonBadge,
+  IonButton,
+  IonCard,
+  IonCardContent,
+  IonContent,
+  IonHeader,
+  IonLabel,
+  IonPage,
+  IonRefresher,
+  IonRefresherContent,
+  IonSegment,
+  IonSegmentButton,
+  IonSkeletonText,
+  IonText,
+  IonTitle,
+  IonToast,
+  IonToolbar,
+  IonIcon,
+} from '@ionic/react';
+import { logOutOutline } from 'ionicons/icons';
 import { QRCodeSVG } from 'qrcode.react';
 import { walletApi } from '../api/walletApi';
-import { WalletAppActivityDto, WalletAppHomeResponse } from '../api/walletTypes';
+import { WalletAppGiftCardSummaryDto, WalletAppHomeResponse, WalletAppPromoSummaryDto } from '../api/walletTypes';
 import { useWalletAuth } from '../context/WalletAuthContext';
 import './Wallet.css';
 
 type WalletFilter = 'all' | 'rewards' | 'giftcards' | 'promos';
 type PassKind = 'reward' | 'giftcard' | 'promo';
-interface WalletPass { id: string; kind: PassKind; title: string; subtitle: string; value: string; meta: string; badge: string; code: string; qrPayload: string; theme: string; helper: string; }
-const money = (value: number): string => `$${Number(value || 0).toFixed(2)}`;
-const formatDate = (value: string): string => value ? new Date(value).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '';
-const formatExpiry = (value?: string | null): string => value ? `Exp. ${new Date(value).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}` : 'No expiry';
 
-const ActivityLine: React.FC<{ activity: WalletAppActivityDto }> = ({ activity }) => (
-  <IonItem lines="full" className="wallet-activity-line">
-    <div slot="start" className={`wallet-activity-dot ${activity.source.toLowerCase()}`} />
-    <IonLabel><h3>{activity.typeText || activity.source}</h3><p>{activity.storeName || activity.note || 'Vookme Wallet'}</p></IonLabel>
-    <div slot="end" className="wallet-activity-end">
-      {activity.pointDelta != null && <strong>{activity.pointDelta > 0 ? '+' : ''}{activity.pointDelta} pts</strong>}
-      {activity.amount != null && <strong>{money(activity.amount)}</strong>}
-      <span>{formatDate(activity.createdAtUtc)}</span>
-    </div>
-  </IonItem>
-);
+interface WalletPass {
+  id: string;
+  kind: PassKind;
+  title: string;
+  storeName: string;
+  subtitle: string;
+  value: string;
+  meta: string;
+  badge: string;
+  codeLabel: string;
+  code: string;
+  qrPayload: string;
+  expiresText: string;
+  storePhoneDisplay: string;
+  theme: string;
+  helper: string;
+}
+
+const money = (value: number): string => `$${Number(value || 0).toFixed(2)}`;
+const formatLongDate = (value?: string | null): string => value ? new Date(value).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+const formatExpiry = (value?: string | null): string => value ? `Expires ${formatLongDate(value)}` : 'No expiration shown';
 
 const HomePage: React.FC = () => {
-  const { apiBaseUrl, authFetch, logout } = useWalletAuth();
+  const { apiBaseUrl, authFetch, logout, customer } = useWalletAuth();
   const [home, setHome] = useState<WalletAppHomeResponse | null>(null);
   const [filter, setFilter] = useState<WalletFilter>('all');
-  const [selectedPass, setSelectedPass] = useState<WalletPass | null>(null);
+  const [selectedPassId, setSelectedPassId] = useState<string>('');
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [toastMessage, setToastMessage] = useState('');
 
   const loadHome = useCallback(async (showLoading = true) => {
     if (showLoading) setLoading(true);
+    setLoadError('');
+
     try {
       const response = await authFetch((token) => walletApi.home(apiBaseUrl, token));
-      setHome(response.data ?? null);
+      const baseHome = response.data ?? null;
+
+      if (!baseHome) {
+        setHome(null);
+        return;
+      }
+
+      let giftCardSummary: WalletAppGiftCardSummaryDto = baseHome.giftCardSummary ?? { totalCount: 0, activeCount: 0, totalBalance: 0, cards: [] };
+      let promoSummary: WalletAppPromoSummaryDto = baseHome.promoSummary ?? { totalCount: 0, activeCount: 0, offers: [] };
+
+      try {
+        const giftResponse = await authFetch((token) => walletApi.giftCards(apiBaseUrl, token));
+        if (giftResponse.data) giftCardSummary = giftResponse.data;
+      } catch {
+        // Keep the home summary if the detail endpoint is temporarily unavailable.
+      }
+
+      try {
+        const promoResponse = await authFetch((token) => walletApi.promos(apiBaseUrl, token));
+        if (promoResponse.data) promoSummary = promoResponse.data;
+      } catch {
+        // Keep the home summary if the detail endpoint is temporarily unavailable.
+      }
+
+      setHome({
+        ...baseHome,
+        giftCardSummary,
+        promoSummary,
+      });
     } catch (error) {
-      if (showLoading) setToastMessage(error instanceof Error ? error.message : 'Wallet could not be loaded.');
-    } finally { setLoading(false); }
+      const message = error instanceof Error ? error.message : 'Wallet could not be loaded.';
+      setLoadError(message);
+      if (showLoading) setToastMessage(message);
+    } finally {
+      setLoading(false);
+    }
   }, [apiBaseUrl, authFetch]);
 
   useEffect(() => { void loadHome(true); }, [loadHome]);
-  const handleRefresh = async (event: CustomEvent) => { await loadHome(false); event.detail.complete(); };
+
+  const handleRefresh = async (event: CustomEvent) => {
+    await loadHome(false);
+    event.detail.complete();
+  };
+
+  const rewardSummary = home?.rewardSummary;
+  const giftCardSummary = home?.giftCardSummary;
+  const promoSummary = home?.promoSummary;
 
   const passes = useMemo<WalletPass[]>(() => {
-    if (!home) return [];
-    const rewardPasses = home.rewardSummary.accounts.map((account): WalletPass => ({
-      id: `reward-${account.rewardAccountId}`, kind: 'reward', title: account.storeName || account.networkName || 'Vookme Rewards', subtitle: account.scopeLabel || 'Reward account', value: `${account.pointBalance} pts`, meta: `${money(account.rewardValue)} available`, badge: 'Rewards', code: account.codeLast4 ? `Card ending ${account.codeLast4}` : 'Reward member card', qrPayload: account.qrPayload || account.cardUrl, theme: 'reward-pass', helper: 'Show this rewards card at the store so staff can look up your points.',
+    const rewardPasses = (rewardSummary?.accounts ?? []).map((account): WalletPass => {
+      const qrPayload = account.qrPayload || account.cardUrl || '';
+      const memberCode = account.memberCode || (account.codeLast4 ? `Member # ${account.codeLast4}` : '');
+      return {
+        id: `reward-${account.rewardAccountId}`,
+        kind: 'reward',
+        title: account.storeName || account.networkName || 'Vookme Rewards',
+        storeName: account.storeName || account.networkName || 'Vookme Rewards',
+        subtitle: account.scopeLabel || 'Reward account',
+        value: `${account.pointBalance ?? 0} pts`,
+        meta: `${money(account.rewardValue ?? 0)} available`,
+        badge: 'Rewards',
+        codeLabel: 'Member #',
+        code: memberCode,
+        qrPayload,
+        expiresText: 'No expiration shown',
+        storePhoneDisplay: account.storePhoneDisplay || '',
+        theme: 'reward-pass',
+        helper: 'Show this rewards card at the store. Staff can scan the QR or enter the member number below.',
+      };
+    });
+
+    const giftPasses = (giftCardSummary?.cards ?? []).map((card): WalletPass => ({
+      id: `gift-${card.giftCardId}`,
+      kind: 'giftcard',
+      title: card.storeName || 'Gift Card',
+      storeName: card.storeName || 'Gift Card',
+      subtitle: card.statusText || 'Gift Card',
+      value: money(card.balanceAmount ?? 0),
+      meta: `Original ${money(card.initialAmount ?? 0)}`,
+      badge: 'Gift Card',
+      codeLabel: 'Gift card code',
+      code: card.redeemCode || (card.codeLast4 ? `Ending ${card.codeLast4}` : ''),
+      qrPayload: card.qrPayload || card.redeemCode || card.publicCardUrl || '',
+      expiresText: formatExpiry(card.expiresAtUtc),
+      storePhoneDisplay: card.storePhoneDisplay || '',
+      theme: 'gift-pass',
+      helper: 'Show this gift card QR or code to redeem from the balance.',
     }));
-    const giftPasses = home.giftCardSummary.cards.map((card): WalletPass => ({
-      id: `gift-${card.giftCardId}`, kind: 'giftcard', title: card.storeName, subtitle: card.statusText || 'Gift Card', value: money(card.balanceAmount), meta: `Gift card ending ${card.codeLast4 || '----'}`, badge: 'Gift Card', code: card.redeemCode || (card.codeLast4 ? `Ending ${card.codeLast4}` : ''), qrPayload: card.qrPayload || card.redeemCode || card.publicCardUrl, theme: 'gift-pass', helper: 'Show this gift card QR or code to redeem from the balance.',
+
+    const promoPasses = (promoSummary?.offers ?? []).map((promo): WalletPass => ({
+      id: `promo-${promo.customerOfferId}`,
+      kind: 'promo',
+      title: promo.offerName || 'Promo Offer',
+      storeName: promo.storeName || 'Vookme Store',
+      subtitle: promo.storeName || 'Vookme Store',
+      value: promo.benefitText || 'Special offer',
+      meta: promo.channelText || 'Promo',
+      badge: 'Promo',
+      codeLabel: 'Promo code',
+      code: promo.code || '',
+      qrPayload: promo.qrPayload || (promo.code ? `promo:${promo.code}` : ''),
+      expiresText: formatExpiry(promo.expiresAtUtc),
+      storePhoneDisplay: promo.storePhoneDisplay || '',
+      theme: 'promo-pass',
+      helper: 'Show this offer at checkout. Staff can scan the QR or enter the code.',
     }));
-    const promoPasses = home.promoSummary.offers.map((promo): WalletPass => ({
-      id: `promo-${promo.customerOfferId}`, kind: 'promo', title: promo.offerName || 'Promo Offer', subtitle: promo.storeName, value: promo.benefitText, meta: `${formatExpiry(promo.expiresAtUtc)} · ${promo.channelText || 'Promo'}`, badge: 'Promo', code: promo.code, qrPayload: promo.qrPayload || (promo.code ? `promo:${promo.code}` : ''), theme: 'promo-pass', helper: 'Show this offer at checkout. Staff can scan the QR or enter the code.',
-    }));
+
     const all = [...rewardPasses, ...giftPasses, ...promoPasses];
     if (filter === 'rewards') return all.filter((x) => x.kind === 'reward');
     if (filter === 'giftcards') return all.filter((x) => x.kind === 'giftcard');
     if (filter === 'promos') return all.filter((x) => x.kind === 'promo');
     return all;
-  }, [filter, home]);
+  }, [filter, giftCardSummary?.cards, promoSummary?.offers, rewardSummary?.accounts]);
+
+  useEffect(() => {
+    if (selectedPassId && !passes.some((pass) => pass.id === selectedPassId)) {
+      setSelectedPassId('');
+    }
+  }, [passes, selectedPassId]);
+
+
+  const displayCustomer = home?.customer ?? customer;
 
   return (
     <IonPage>
-      <IonHeader translucent><IonToolbar><IonTitle>Wallet</IonTitle><IonButton slot="end" fill="clear" onClick={logout} aria-label="Logout"><IonIcon icon={logOutOutline} /></IonButton></IonToolbar></IonHeader>
-      <IonContent fullscreen className="wallet-page-bg">
+      <IonHeader translucent>
+        <IonToolbar>
+          <IonTitle>Wallet</IonTitle>
+          <IonButton slot="end" fill="clear" onClick={logout} aria-label="Logout"><IonIcon icon={logOutOutline} /></IonButton>
+        </IonToolbar>
+      </IonHeader>
+      <IonContent fullscreen className="wallet-page-bg wallet-page-wallet-stack">
         <IonRefresher slot="fixed" onIonRefresh={handleRefresh}><IonRefresherContent /></IonRefresher>
-        <div className="wallet-content-wrap">
-          <div className="wallet-hero-card wallet-hero-compact"><div><span className="wallet-eyebrow">Vookme Wallet</span><h1>{home?.customer.displayName || 'My Wallet'}</h1><p>{home?.customer.emailMasked || home?.customer.phoneMasked || 'Rewards, gift cards, and offers in one place.'}</p></div></div>
-          <div className="wallet-summary-strip"><div><span>Rewards</span><strong>{loading ? <IonSkeletonText animated /> : `${home?.rewardSummary.totalPoints ?? 0} pts`}</strong></div><div><span>Gift Cards</span><strong>{loading ? <IonSkeletonText animated /> : money(home?.giftCardSummary.totalBalance ?? 0)}</strong></div><div><span>Promos</span><strong>{loading ? <IonSkeletonText animated /> : home?.promoSummary.activeCount ?? 0}</strong></div></div>
-          <IonSegment value={filter} onIonChange={(event) => setFilter((event.detail.value as WalletFilter) || 'all')} className="wallet-filter-segment"><IonSegmentButton value="all"><IonLabel>All</IonLabel></IonSegmentButton><IonSegmentButton value="rewards"><IonLabel>Rewards</IonLabel></IonSegmentButton><IonSegmentButton value="giftcards"><IonLabel>Cards</IonLabel></IonSegmentButton><IonSegmentButton value="promos"><IonLabel>Promos</IonLabel></IonSegmentButton></IonSegment>
+        <div className="wallet-content-wrap wallet-stack-wrap">
+          <div className="wallet-stack-header">
+            <div>
+              <span className="wallet-eyebrow wallet-eyebrow-dark">Vookme Wallet</span>
+              <h1>{displayCustomer?.displayName || 'My Wallet'}</h1>
+              <p>Tap a card to show the QR and full code.</p>
+            </div>
+          </div>
+
+          {loadError && !loading && (
+            <IonCard className="wallet-card wallet-error-card">
+              <IonCardContent>
+                <IonText color="danger"><h2>Wallet could not be loaded</h2></IonText>
+                <p>{loadError}</p>
+                <IonButton expand="block" onClick={() => loadHome(true)}>Try again</IonButton>
+              </IonCardContent>
+            </IonCard>
+          )}
+
+          <IonSegment value={filter} onIonChange={(event) => setFilter((event.detail.value as WalletFilter) || 'all')} className="wallet-filter-segment wallet-pass-filter-segment">
+            <IonSegmentButton value="all"><IonLabel>All</IonLabel></IonSegmentButton>
+            <IonSegmentButton value="rewards"><IonLabel>Rewards</IonLabel></IonSegmentButton>
+            <IonSegmentButton value="giftcards"><IonLabel>Cards</IonLabel></IonSegmentButton>
+            <IonSegmentButton value="promos"><IonLabel>Promos</IonLabel></IonSegmentButton>
+          </IonSegment>
+
           {loading && <IonSkeletonText animated className="wallet-pass-skeleton" />}
-          {!loading && passes.length === 0 && <IonCard className="wallet-card"><IonCardContent><IonText color="medium">No wallet passes found yet.</IonText></IonCardContent></IonCard>}
-          {!loading && passes.length > 0 && <div className="wallet-pass-stack">{passes.map((pass) => <button type="button" className={`wallet-pass ${pass.theme}`} key={pass.id} onClick={() => setSelectedPass(pass)}><div className="wallet-pass-top"><span>{pass.badge}</span><IonBadge color="light">Tap</IonBadge></div><div><h2>{pass.title}</h2><p>{pass.subtitle}</p></div><div className="wallet-pass-bottom"><strong>{pass.value}</strong><span>{pass.meta}</span></div></button>)}</div>}
-          <IonCard className="wallet-card"><IonCardContent><div className="wallet-section-title-row"><div><h2>Recent activity</h2><p>Latest wallet movement</p></div><IonButton fill="clear" routerLink="/wallet/activity">View all</IonButton></div>{loading && <IonSkeletonText animated className="wallet-list-skeleton" />}{!loading && home?.recentActivities.length === 0 && <IonText color="medium">No recent activity yet.</IonText>}{!loading && Boolean(home?.recentActivities.length) && <IonList className="wallet-clean-list">{home?.recentActivities.slice(0, 5).map((activity, index) => <ActivityLine activity={activity} key={`${activity.source}-${activity.createdAtUtc}-${index}`} />)}</IonList>}</IonCardContent></IonCard>
-          <IonCard className="wallet-card"><IonCardContent><div className="wallet-section-title-row"><div><h2>Connected stores</h2><p>Places connected to your wallet</p></div><IonButton fill="clear" routerLink="/wallet/stores">View all</IonButton></div>{!loading && home?.favoriteStores.length === 0 && <IonText color="medium">No connected stores found.</IonText>}{!loading && Boolean(home?.favoriteStores.length) && <IonList className="wallet-clean-list">{home?.favoriteStores.map((store) => <IonItem lines="full" key={store.storeId}><IonIcon icon={storefrontOutline} slot="start" /><IonLabel><h3>{store.storeName}</h3><p>{store.cityState || store.businessTypeName}</p></IonLabel><div className="wallet-store-mini-badges" slot="end">{store.rewardsEnabled && <IonIcon icon={ribbonOutline} />}{store.giftCardsEnabled && <IonIcon icon={giftOutline} />}{store.promosEnabled && <IonIcon icon={pricetagOutline} />}</div></IonItem>)}</IonList>}</IonCardContent></IonCard>
+          {!loading && passes.length === 0 && !loadError && (
+            <IonCard className="wallet-card"><IonCardContent><IonText color="medium">No wallet cards found yet.</IonText></IonCardContent></IonCard>
+          )}
+
+          {!loading && passes.length > 0 && (
+            <div className="wallet-pass-stack wallet-pass-stack-overlap">
+              {passes.map((pass, index) => {
+                const expanded = selectedPassId === pass.id;
+                return (
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    aria-expanded={expanded}
+                    className={`wallet-pass ${pass.theme} ${expanded ? 'wallet-pass-expanded' : ''}`}
+                    key={pass.id}
+                    style={{ zIndex: expanded ? 100 : passes.length - index }}
+                    onClick={() => setSelectedPassId(expanded ? '' : pass.id)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        setSelectedPassId(expanded ? '' : pass.id);
+                      }
+                    }}
+                  >
+                    <div className="wallet-pass-top">
+                      <span>{pass.badge}</span>
+                      <IonBadge color="light">{expanded ? 'Open' : 'Tap'}</IonBadge>
+                    </div>
+                    <div className="wallet-pass-main-row">
+                      <div>
+                        <h2>{pass.title}</h2>
+                        <p>{pass.subtitle}</p>
+                      </div>
+                      <div className="wallet-pass-value-block">
+                        <strong>{pass.value}</strong>
+                        <span>{pass.meta}</span>
+                      </div>
+                    </div>
+
+                    {expanded && (
+                      <div className="wallet-pass-expanded-body" onClick={(event) => event.stopPropagation()}>
+                        <div className="wallet-pass-qr-area">
+                          {pass.qrPayload ? (
+                            <QRCodeSVG value={pass.qrPayload} size={172} level="M" includeMargin />
+                          ) : (
+                            <IonText color="medium">QR is not available for this card.</IonText>
+                          )}
+                        </div>
+                        <div className="wallet-pass-detail-grid">
+                          <div>
+                            <span>{pass.codeLabel}</span>
+                            <strong>{pass.code || 'Not available'}</strong>
+                          </div>
+                          <div>
+                            <span>Expiration</span>
+                            <strong>{pass.expiresText}</strong>
+                          </div>
+                          <div>
+                            <span>Store phone</span>
+                            <strong>{pass.storePhoneDisplay || 'Not shown'}</strong>
+                          </div>
+                        </div>
+                        <p className="wallet-modal-helper">{pass.helper}</p>
+
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
-        <IonModal isOpen={Boolean(selectedPass)} onDidDismiss={() => setSelectedPass(null)} breakpoints={[0, 0.92]} initialBreakpoint={0.92}><IonContent className="wallet-page-bg">{selectedPass && <div className="wallet-modal-wrap"><div className={`wallet-pass wallet-pass-modal ${selectedPass.theme}`}><div className="wallet-pass-top"><span>{selectedPass.badge}</span><IonBadge color="light">Ready</IonBadge></div><div><h2>{selectedPass.title}</h2><p>{selectedPass.subtitle}</p></div><div className="wallet-pass-bottom"><strong>{selectedPass.value}</strong><span>{selectedPass.meta}</span></div></div><IonCard className="wallet-card wallet-qr-detail-card"><IonCardContent>{selectedPass.qrPayload ? <div className="wallet-qr-box wallet-qr-box-bright"><QRCodeSVG value={selectedPass.qrPayload} size={260} level="M" includeMargin /></div> : <IonText color="medium">QR is not available for this pass.</IonText>}{selectedPass.code && <div className="wallet-code-block"><span>Code</span><strong>{selectedPass.code}</strong></div>}<p className="wallet-modal-helper">{selectedPass.helper}</p><IonButton expand="block" onClick={() => setSelectedPass(null)}>Done</IonButton></IonCardContent></IonCard></div>}</IonContent></IonModal>
+
         <IonToast isOpen={Boolean(toastMessage)} message={toastMessage} duration={2600} onDidDismiss={() => setToastMessage('')} />
       </IonContent>
     </IonPage>
   );
 };
+
 export default HomePage;

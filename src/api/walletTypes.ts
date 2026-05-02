@@ -78,7 +78,9 @@ export interface WalletAppRewardAccountDto {
   rewardValue: number;
   cardUrl: string;
   qrPayload: string;
+  memberCode?: string;
   codeLast4: string;
+  storePhoneDisplay?: string;
 }
 
 export interface WalletAppGiftCardSummaryDto {
@@ -101,6 +103,7 @@ export interface WalletAppGiftCardDto {
   statusText: string;
   issuedAtUtc: string;
   expiresAtUtc?: string | null;
+  storePhoneDisplay?: string;
 }
 
 export interface WalletAppPromoSummaryDto {
@@ -123,6 +126,7 @@ export interface WalletAppPromoOfferDto {
   isInStoreRedeemable: boolean;
   isOnlineOrderRedeemable: boolean;
   isReservationRedeemable: boolean;
+  storePhoneDisplay?: string;
 }
 
 export interface WalletAppActivityDto {

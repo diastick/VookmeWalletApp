@@ -27,6 +27,7 @@ export class WalletApiError extends Error {
   }
 }
 
+const REQUEST_TIMEOUT_MS = 12000;
 const normalizeBaseUrl = (baseUrl: string): string => baseUrl.replace(/\/+$/, '');
 const sleep = (ms: number): Promise<void> => new Promise((resolve) => window.setTimeout(resolve, ms));
 
@@ -34,7 +35,29 @@ const isTransientFetchError = (error: unknown): boolean => {
   if (error instanceof WalletApiError) return false;
   if (!(error instanceof Error)) return false;
   const message = error.message.toLowerCase();
-  return message.includes('failed to fetch') || message.includes('networkerror') || message.includes('load failed');
+  return message.includes('failed to fetch') || message.includes('networkerror') || message.includes('load failed') || message.includes('aborted') || message.includes('timeout');
+};
+
+const mergeSignals = (timeoutMs: number, externalSignal?: AbortSignal | null): { signal: AbortSignal; cleanup: () => void } => {
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort('timeout'), timeoutMs);
+
+  const onAbort = () => {
+    if (!controller.signal.aborted) controller.abort(externalSignal?.reason ?? 'aborted');
+  };
+
+  if (externalSignal) {
+    if (externalSignal.aborted) onAbort();
+    else externalSignal.addEventListener('abort', onAbort, { once: true });
+  }
+
+  return {
+    signal: controller.signal,
+    cleanup: () => {
+      window.clearTimeout(timeoutId);
+      externalSignal?.removeEventListener('abort', onAbort);
+    },
+  };
 };
 
 async function request<T>(
@@ -50,14 +73,21 @@ async function request<T>(
     headers.set('Content-Type', 'application/json');
   }
 
+  headers.set('Accept', 'application/json');
+  headers.set('Cache-Control', 'no-cache');
+
   if (accessToken) {
     headers.set('Authorization', `Bearer ${accessToken}`);
   }
+
+  const { signal, cleanup } = mergeSignals(REQUEST_TIMEOUT_MS, options.signal);
 
   try {
     const response = await fetch(`${normalizeBaseUrl(baseUrl)}${path}`, {
       ...options,
       headers,
+      signal,
+      cache: 'no-store',
     });
 
     let payload: WalletAppApiResponse<T> | null = null;
@@ -87,7 +117,13 @@ async function request<T>(
       return request<T>(baseUrl, path, options, accessToken, false);
     }
 
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      throw new WalletApiError('The wallet server did not respond. Please try again.', 408);
+    }
+
     throw error;
+  } finally {
+    cleanup();
   }
 }
 

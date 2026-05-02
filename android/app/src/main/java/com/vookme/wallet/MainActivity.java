@@ -1,4 +1,4 @@
-package io.ionic.starter;
+package com.vookme.wallet;
 
 import com.getcapacitor.BridgeActivity;
 
