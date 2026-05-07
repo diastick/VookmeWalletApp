@@ -10,6 +10,8 @@ import {
   WalletAppRequestCodeRequest,
   WalletAppRequestCodeResponse,
   WalletAppRewardSummaryDto,
+  WalletAppRewardTicketClaimResponseDto,
+  WalletAppRewardTicketDetailDto,
   WalletAppStoreDto,
   WalletAppTokenResponse,
   WalletAppVerifyCodeRequest,
@@ -177,6 +179,24 @@ export const walletApi = {
     return request<WalletAppPromoSummaryDto>(baseUrl, '/api/wallet/promos', { method: 'GET' }, accessToken);
   },
 
+  rewardTicketDetail(baseUrl: string, code: string, accessToken?: string | null) {
+    return request<WalletAppRewardTicketDetailDto>(
+      baseUrl,
+      `/api/wallet/reward-ticket/${encodeURIComponent(code)}/detail`,
+      { method: 'GET' },
+      accessToken
+    );
+  },
+
+  claimRewardTicket(baseUrl: string, code: string, accessToken: string) {
+    return request<WalletAppRewardTicketClaimResponseDto>(
+      baseUrl,
+      `/api/wallet/reward-ticket/${encodeURIComponent(code)}/claim`,
+      { method: 'POST' },
+      accessToken
+    );
+  },
+
   stores(baseUrl: string, accessToken: string, q = '', location = '', page = 1, pageSize = 20) {
     const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
     if (q.trim()) params.set('q', q.trim());
@@ -184,3 +204,54 @@ export const walletApi = {
     return request<WalletAppPagedResponse<WalletAppStoreDto>>(baseUrl, `/api/wallet/stores?${params.toString()}`, { method: 'GET' }, accessToken);
   },
 };
+
+
+export const extractRewardTicketCode = (codeOrUrl: string): string => {
+  const value = (codeOrUrl || '').trim();
+  if (!value) return '';
+
+  try {
+    const parsed = new URL(value);
+    const host = parsed.hostname.toLowerCase();
+    const path = parsed.pathname || '';
+
+    if (parsed.protocol === 'vookme:' && host === 'ticket') {
+      const match = path.match(/^\/claim\/([^?#\s/]+)/i);
+      if (match?.[1]) return decodeURIComponent(match[1]);
+    }
+
+    const claimPathMatch = path.match(/\/(?:reward\/ticket\/claim|ticket\/claim)\/([^?#\s/]+)/i);
+    if (claimPathMatch?.[1]) return decodeURIComponent(claimPathMatch[1]);
+  } catch {
+    // Fall back to regex-only parsing below.
+  }
+
+  const claimPathMatch = value.match(/\/(?:reward\/ticket\/claim|ticket\/claim)\/([^?#\s/]+)/i);
+  if (claimPathMatch?.[1]) return decodeURIComponent(claimPathMatch[1]);
+
+  const legacyPrefixMatch = value.match(/^(?:vookme-ticket:|ticket:)(.+)$/i);
+  if (legacyPrefixMatch?.[1]) return legacyPrefixMatch[1].trim();
+
+  return value;
+};
+
+export const buildRewardTicketClaimUrl = (baseUrl: string, codeOrUrl: string): string => {
+  const value = (codeOrUrl || '').trim();
+  if (!value) return '';
+
+  if (/^https?:\/\//i.test(value)) return value;
+
+  const code = extractRewardTicketCode(value);
+  return code ? `${normalizeBaseUrl(baseUrl)}/ticket/claim/${encodeURIComponent(code)}` : '';
+};
+
+export const buildRewardTicketAppPath = (codeOrUrl: string): string => {
+  const code = extractRewardTicketCode(codeOrUrl);
+  return code ? `/ticket/claim/${encodeURIComponent(code)}` : '/wallet/home';
+};
+
+export const buildRewardTicketNativeDeepLink = (codeOrUrl: string): string => {
+  const code = extractRewardTicketCode(codeOrUrl);
+  return code ? `vookme://ticket/claim/${encodeURIComponent(code)}` : 'vookme://wallet/home';
+};
+

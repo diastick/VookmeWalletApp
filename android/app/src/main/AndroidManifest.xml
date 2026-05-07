@@ -22,6 +22,59 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
+            <!-- Custom scheme deep link: vookme://ticket/claim/{code} -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:scheme="vookme"
+                    android:host="ticket"
+                    android:pathPrefix="/claim" />
+            </intent-filter>
+
+            <!-- HTTPS App Links.
+                 App installed: Android can open Vookme Wallet directly.
+                 App not installed: the same HTTPS URL stays on the web/PWA fallback page. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:scheme="https"
+                    android:host="vookme.com"
+                    android:pathPrefix="/ticket/claim" />
+
+                <data
+                    android:scheme="https"
+                    android:host="www.vookme.com"
+                    android:pathPrefix="/ticket/claim" />
+
+                <data
+                    android:scheme="https"
+                    android:host="api.vookme.com"
+                    android:pathPrefix="/ticket/claim" />
+
+                <data
+                    android:scheme="https"
+                    android:host="vookme.com"
+                    android:pathPrefix="/reward/ticket/claim" />
+
+                <data
+                    android:scheme="https"
+                    android:host="www.vookme.com"
+                    android:pathPrefix="/reward/ticket/claim" />
+
+                <data
+                    android:scheme="https"
+                    android:host="api.vookme.com"
+                    android:pathPrefix="/reward/ticket/claim" />
+            </intent-filter>
+
         </activity>
 
         <provider
@@ -31,7 +84,7 @@
             android:grantUriPermissions="true">
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/file_paths"></meta-data>
+                android:resource="@xml/file_paths" />
         </provider>
     </application>
 

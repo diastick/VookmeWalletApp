@@ -19,7 +19,7 @@ import {
   IonToolbar,
   IonIcon,
 } from '@ionic/react';
-import { logOutOutline } from 'ionicons/icons';
+import { logOutOutline, ticketOutline } from 'ionicons/icons';
 import { QRCodeSVG } from 'qrcode.react';
 import { walletApi } from '../api/walletApi';
 import { WalletAppGiftCardSummaryDto, WalletAppHomeResponse, WalletAppPromoSummaryDto } from '../api/walletTypes';
@@ -208,6 +208,21 @@ const HomePage: React.FC = () => {
               <p>Tap a card to show the QR and full code.</p>
             </div>
           </div>
+
+          <IonCard className="wallet-card wallet-ticket-claim-entry-card">
+            <IonCardContent>
+              <div className="wallet-ticket-claim-entry">
+                <div>
+                  <h2>Have a reward ticket?</h2>
+                  <p>Scan the store's QR ticket and claim points with phone verification.</p>
+                </div>
+                <IonButton routerLink="/wallet/ticket-scan" fill="solid">
+                  <IonIcon icon={ticketOutline} slot="start" />
+                  Scan Ticket
+                </IonButton>
+              </div>
+            </IonCardContent>
+          </IonCard>
 
           {loadError && !loading && (
             <IonCard className="wallet-card wallet-error-card">

@@ -18,13 +18,15 @@ import {
   IonToast,
   IonToolbar,
 } from '@ionic/react';
-import { useHistory } from 'react-router-dom';
+import { useHistory, useLocation } from 'react-router-dom';
 import { useWalletAuth } from '../context/WalletAuthContext';
 import './Wallet.css';
 
 const LoginPage: React.FC = () => {
   const history = useHistory();
+  const location = useLocation();
   const { apiBaseUrl, setApiBaseUrl, requestCode, verifyCode } = useWalletAuth();
+  const redirectTo = new URLSearchParams(location.search).get('redirect') || '/wallet/home';
   const [phoneOrEmail, setPhoneOrEmail] = useState('');
   const [method, setMethod] = useState<'email' | 'sms' | ''>('email');
   const [verificationToken, setVerificationToken] = useState('');
@@ -69,7 +71,7 @@ const LoginPage: React.FC = () => {
     setBusy(true);
     try {
       await verifyCode(verificationToken, otpCode.trim());
-      history.replace('/wallet/home');
+      history.replace(redirectTo.startsWith('/') ? redirectTo : '/wallet/home');
     } catch (error) {
       setToastMessage(error instanceof Error ? error.message : 'Verification failed.');
     } finally {

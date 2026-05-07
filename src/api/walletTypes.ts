@@ -163,3 +163,29 @@ export interface WalletAppStoreDto {
   giftCardsEnabled: boolean;
   promosEnabled: boolean;
 }
+
+export interface WalletAppRewardTicketDetailDto {
+  code: string;
+  storeId: number;
+  storeName: string;
+  rewardName: string;
+  points: number;
+  rewardValue: number;
+  thankYouMessage: string;
+  expiresAtUtc?: string | null;
+  status: string;
+  statusText: string;
+  canAddToWallet: boolean;
+  alreadyAddedToWallet: boolean;
+  ticketNumber: number;
+}
+
+export interface WalletAppRewardTicketClaimResponseDto {
+  added: boolean;
+  alreadyAdded: boolean;
+  pointsAdded: number;
+  balanceAfter: number;
+  balanceValueAfter: number;
+  ticket: WalletAppRewardTicketDetailDto;
+}
+
