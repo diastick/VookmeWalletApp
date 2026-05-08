@@ -6,6 +6,7 @@ import {
   IonCardContent,
   IonContent,
   IonHeader,
+  IonIcon,
   IonLabel,
   IonPage,
   IonRefresher,
@@ -17,7 +18,6 @@ import {
   IonTitle,
   IonToast,
   IonToolbar,
-  IonIcon,
 } from '@ionic/react';
 import { logOutOutline, ticketOutline } from 'ionicons/icons';
 import { QRCodeSVG } from 'qrcode.react';
@@ -46,6 +46,10 @@ interface WalletPass {
   theme: string;
   helper: string;
 }
+
+const rewardThemes = ['reward-pass reward-pass-green', 'reward-pass reward-pass-blue', 'reward-pass reward-pass-teal', 'reward-pass reward-pass-indigo'];
+const giftThemes = ['gift-pass gift-pass-purple', 'gift-pass gift-pass-gold', 'gift-pass gift-pass-rose'];
+const promoThemes = ['promo-pass promo-pass-orange', 'promo-pass promo-pass-pink', 'promo-pass promo-pass-slate'];
 
 const money = (value: number): string => `$${Number(value || 0).toFixed(2)}`;
 const formatLongDate = (value?: string | null): string => value ? new Date(value).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '';
@@ -116,29 +120,29 @@ const HomePage: React.FC = () => {
   const promoSummary = home?.promoSummary;
 
   const passes = useMemo<WalletPass[]>(() => {
-    const rewardPasses = (rewardSummary?.accounts ?? []).map((account): WalletPass => {
+    const rewardPasses = (rewardSummary?.accounts ?? []).map((account, index): WalletPass => {
       const qrPayload = account.qrPayload || account.cardUrl || '';
       const memberCode = account.memberCode || (account.codeLast4 ? `Member # ${account.codeLast4}` : '');
       return {
         id: `reward-${account.rewardAccountId}`,
         kind: 'reward',
-        title: account.storeName || account.networkName || 'Vookme Rewards',
+        title: account.displayName || account.storeName || account.networkName || 'Vookme Rewards',
         storeName: account.storeName || account.networkName || 'Vookme Rewards',
-        subtitle: account.scopeLabel || 'Reward account',
+        subtitle: account.displaySubtitle || account.scopeLabel || 'Reward account',
         value: `${account.pointBalance ?? 0} pts`,
         meta: `${money(account.rewardValue ?? 0)} available`,
-        badge: 'Rewards',
+        badge: account.isNetworkReward ? 'Network Rewards' : 'Rewards',
         codeLabel: 'Member #',
         code: memberCode,
         qrPayload,
         expiresText: 'No expiration shown',
         storePhoneDisplay: account.storePhoneDisplay || '',
-        theme: 'reward-pass',
-        helper: 'Show this rewards card at the store. Staff can scan the QR or enter the member number below.',
+        theme: account.isNetworkReward ? 'reward-pass reward-pass-network' : rewardThemes[index % rewardThemes.length],
+        helper: account.canUseAtText || 'Show this rewards card at a participating store. Staff can scan the QR or enter the member number below.',
       };
     });
 
-    const giftPasses = (giftCardSummary?.cards ?? []).map((card): WalletPass => ({
+    const giftPasses = (giftCardSummary?.cards ?? []).map((card, index): WalletPass => ({
       id: `gift-${card.giftCardId}`,
       kind: 'giftcard',
       title: card.storeName || 'Gift Card',
@@ -152,11 +156,11 @@ const HomePage: React.FC = () => {
       qrPayload: card.qrPayload || card.redeemCode || card.publicCardUrl || '',
       expiresText: formatExpiry(card.expiresAtUtc),
       storePhoneDisplay: card.storePhoneDisplay || '',
-      theme: 'gift-pass',
+      theme: giftThemes[index % giftThemes.length],
       helper: 'Show this gift card QR or code to redeem from the balance.',
     }));
 
-    const promoPasses = (promoSummary?.offers ?? []).map((promo): WalletPass => ({
+    const promoPasses = (promoSummary?.offers ?? []).map((promo, index): WalletPass => ({
       id: `promo-${promo.customerOfferId}`,
       kind: 'promo',
       title: promo.offerName || 'Promo Offer',
@@ -170,7 +174,7 @@ const HomePage: React.FC = () => {
       qrPayload: promo.qrPayload || (promo.code ? `promo:${promo.code}` : ''),
       expiresText: formatExpiry(promo.expiresAtUtc),
       storePhoneDisplay: promo.storePhoneDisplay || '',
-      theme: 'promo-pass',
+      theme: promoThemes[index % promoThemes.length],
       helper: 'Show this offer at checkout. Staff can scan the QR or enter the code.',
     }));
 
@@ -186,7 +190,6 @@ const HomePage: React.FC = () => {
       setSelectedPassId('');
     }
   }, [passes, selectedPassId]);
-
 
   const displayCustomer = home?.customer ?? customer;
 
@@ -205,24 +208,13 @@ const HomePage: React.FC = () => {
             <div>
               <span className="wallet-eyebrow wallet-eyebrow-dark">Vookme Wallet</span>
               <h1>{displayCustomer?.displayName || 'My Wallet'}</h1>
-              <p>Tap a card to show the QR and full code.</p>
+              <p>Your cards are kept here. Tap one to show QR and details.</p>
             </div>
+            <IonButton routerLink="/wallet/ticket-scan" fill="outline" size="small" className="wallet-scan-ticket-link">
+              <IonIcon icon={ticketOutline} slot="start" />
+              Scan
+            </IonButton>
           </div>
-
-          <IonCard className="wallet-card wallet-ticket-claim-entry-card">
-            <IonCardContent>
-              <div className="wallet-ticket-claim-entry">
-                <div>
-                  <h2>Have a reward ticket?</h2>
-                  <p>Scan the store's QR ticket and claim points with phone verification.</p>
-                </div>
-                <IonButton routerLink="/wallet/ticket-scan" fill="solid">
-                  <IonIcon icon={ticketOutline} slot="start" />
-                  Scan Ticket
-                </IonButton>
-              </div>
-            </IonCardContent>
-          </IonCard>
 
           {loadError && !loading && (
             <IonCard className="wallet-card wallet-error-card">
@@ -257,7 +249,7 @@ const HomePage: React.FC = () => {
                     aria-expanded={expanded}
                     className={`wallet-pass ${pass.theme} ${expanded ? 'wallet-pass-expanded' : ''}`}
                     key={pass.id}
-                    style={{ zIndex: expanded ? 100 : passes.length - index }}
+                    style={{ zIndex: expanded ? 100 + passes.length : index + 1 }}
                     onClick={() => setSelectedPassId(expanded ? '' : pass.id)}
                     onKeyDown={(event) => {
                       if (event.key === 'Enter' || event.key === ' ') {
@@ -305,7 +297,6 @@ const HomePage: React.FC = () => {
                           </div>
                         </div>
                         <p className="wallet-modal-helper">{pass.helper}</p>
-
                       </div>
                     )}
                   </div>

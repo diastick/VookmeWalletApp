@@ -14,6 +14,8 @@ import {
   WalletAppRewardTicketDetailDto,
   WalletAppStoreDto,
   WalletAppTokenResponse,
+  WalletAppUpdateProfileRequest,
+  WalletAppCustomerDto,
   WalletAppVerifyCodeRequest,
 } from './walletTypes';
 
@@ -153,6 +155,13 @@ export const walletApi = {
 
   logout(baseUrl: string, accessToken: string) {
     return request<{ success: boolean }>(baseUrl, '/api/wallet/auth/logout', { method: 'POST' }, accessToken);
+  },
+
+  updateProfile(baseUrl: string, accessToken: string, requestBody: WalletAppUpdateProfileRequest) {
+    return request<WalletAppCustomerDto>(baseUrl, '/api/wallet/profile', {
+      method: 'POST',
+      body: JSON.stringify(requestBody),
+    }, accessToken);
   },
 
   home(baseUrl: string, accessToken: string) {

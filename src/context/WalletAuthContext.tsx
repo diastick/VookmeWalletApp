@@ -22,6 +22,7 @@ interface WalletAuthContextValue {
   initialized: boolean;
   isAuthenticated: boolean;
   setApiBaseUrl: (value: string) => Promise<void>;
+  updateCustomerProfile: (displayName: string) => Promise<WalletAppCustomerDto>;
   requestCode: (phoneOrEmail: string, method: 'email' | 'sms' | '') => Promise<WalletAppRequestCodeResponse>;
   verifyCode: (verificationToken: string, code: string) => Promise<WalletAppTokenResponse>;
   refreshAccessToken: () => Promise<string | null>;
@@ -244,11 +245,20 @@ export const WalletAuthProvider: React.FC<React.PropsWithChildren> = ({ children
     }
   }, [clearSession, refreshAccessToken]);
 
+  const updateCustomerProfile = useCallback(async (displayName: string) => {
+    const response = await authFetch((token) => walletApi.updateProfile(apiBaseUrlRef.current, token, { displayName }));
+    if (!response.data) throw new WalletApiError(response.message || 'Profile could not be updated.', 400, response.message);
+
+    setCustomer(response.data);
+    await writePreference(WALLET_CUSTOMER_STORAGE_KEY, JSON.stringify(response.data));
+    return response.data;
+  }, [authFetch]);
+
   const value = useMemo<WalletAuthContextValue>(() => ({
     accessToken, refreshToken, apiBaseUrl, customer, initialized,
-    isAuthenticated: Boolean(accessToken || refreshToken), setApiBaseUrl, requestCode, verifyCode,
+    isAuthenticated: Boolean(accessToken || refreshToken), setApiBaseUrl, updateCustomerProfile, requestCode, verifyCode,
     refreshAccessToken, logout, authFetch,
-  }), [accessToken, refreshToken, apiBaseUrl, customer, initialized, setApiBaseUrl, requestCode, verifyCode, refreshAccessToken, logout, authFetch]);
+  }), [accessToken, refreshToken, apiBaseUrl, customer, initialized, setApiBaseUrl, updateCustomerProfile, requestCode, verifyCode, refreshAccessToken, logout, authFetch]);
 
   return <WalletAuthContext.Provider value={value}>{children}</WalletAuthContext.Provider>;
 };

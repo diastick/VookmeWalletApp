@@ -33,6 +33,11 @@ export interface WalletAppRefreshTokenRequest {
   refreshToken: string;
 }
 
+
+export interface WalletAppUpdateProfileRequest {
+  displayName: string;
+}
+
 export interface WalletAppTokenResponse {
   accessToken: string;
   accessTokenExpiresAtUtc: string;
@@ -57,6 +62,8 @@ export interface WalletAppHomeResponse {
   promoSummary: WalletAppPromoSummaryDto;
   recentActivities: WalletAppActivityDto[];
   favoriteStores: WalletAppStoreDto[];
+  localNetworks: WalletAppLocalNetworkDto[];
+  campaignProgress: WalletAppCampaignProgressDto[];
   qrAvailable: boolean;
 }
 
@@ -81,6 +88,10 @@ export interface WalletAppRewardAccountDto {
   memberCode?: string;
   codeLast4: string;
   storePhoneDisplay?: string;
+  displayName?: string;
+  displaySubtitle?: string;
+  canUseAtText?: string;
+  isNetworkReward?: boolean;
 }
 
 export interface WalletAppGiftCardSummaryDto {
@@ -141,9 +152,42 @@ export interface WalletAppActivityDto {
   codeLast4?: string | null;
 }
 
+export interface WalletAppLocalNetworkDto {
+  networkId: number;
+  networkName: string;
+  displayName: string;
+  headline: string;
+  description: string;
+  areaText: string;
+  storeCount: number;
+  availablePoints: number;
+  availableRewardValue: number;
+  isPrimary: boolean;
+  featuredStores: WalletAppStoreDto[];
+}
+
+export interface WalletAppCampaignProgressDto {
+  campaignId: number;
+  campaignName: string;
+  networkId?: number | null;
+  networkName: string;
+  description: string;
+  progressText: string;
+  progressCount: number;
+  requiredCount: number;
+  pointsEarned: number;
+  rewardValueEarned: number;
+  isCompleted: boolean;
+  expiresAtUtc?: string | null;
+}
+
 export interface WalletAppQrResponse {
   qrToken: string;
   scanUrl: string;
+  qrPurpose?: string;
+  displayTitle?: string;
+  displaySubtitle?: string;
+  supportedScanTargets?: string[];
   expiresAtUtc: string;
   validForSeconds: number;
   refreshAfterSeconds: number;
@@ -153,6 +197,9 @@ export interface WalletAppStoreDto {
   storeId: number;
   storeName: string;
   businessTypeName: string;
+  networkId?: number | null;
+  networkName?: string;
+  networkDisplayName?: string;
   cityState: string;
   phoneDisplay: string;
   websiteUrl: string;
@@ -162,6 +209,11 @@ export interface WalletAppStoreDto {
   rewardsEnabled: boolean;
   giftCardsEnabled: boolean;
   promosEnabled: boolean;
+  earnHere?: boolean;
+  redeemHere?: boolean;
+  currentOffer?: string;
+  isFeatured?: boolean;
+  displayOrder?: number;
 }
 
 export interface WalletAppRewardTicketDetailDto {
@@ -188,4 +240,3 @@ export interface WalletAppRewardTicketClaimResponseDto {
   balanceValueAfter: number;
   ticket: WalletAppRewardTicketDetailDto;
 }
-

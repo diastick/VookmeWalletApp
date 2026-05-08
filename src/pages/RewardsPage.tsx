@@ -67,7 +67,7 @@ const RewardsPage: React.FC = () => {
           <div className="wallet-balance-card rewards">
             <span>Total rewards</span>
             <strong>{loading ? <IonSkeletonText animated /> : `${summary?.totalPoints ?? 0} pts`}</strong>
-            <p>{money(summary?.totalRewardValue ?? 0)} available value</p>
+            <p>{money(summary?.totalRewardValue ?? 0)} available value · 100 pts = $1</p>
           </div>
 
           <IonCard className="wallet-card">
@@ -90,8 +90,8 @@ const RewardsPage: React.FC = () => {
                   {summary?.accounts.map((account) => (
                     <IonItem lines="full" key={account.rewardAccountId}>
                       <IonLabel>
-                        <h3>{account.storeName || account.networkName || 'Vookme Rewards'}</h3>
-                        <p>{account.scopeLabel || account.networkName || 'Reward balance'}</p>
+                        <h3>{account.displayName || account.storeName || account.networkName || 'Vookme Rewards'}</h3>
+                        <p>{account.displaySubtitle || account.canUseAtText || account.scopeLabel || 'Reward balance'}</p>
                       </IonLabel>
                       <div slot="end" className="wallet-end-stack">
                         <strong>{account.pointBalance} pts</strong>
