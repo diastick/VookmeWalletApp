@@ -51,6 +51,8 @@ export interface WalletAppCustomerDto {
   displayName: string;
   phoneMasked: string;
   emailMasked: string;
+  phoneDisplay?: string;
+  emailDisplay?: string;
   smsOptIn: boolean;
   emailOptIn: boolean;
 }
@@ -121,23 +123,56 @@ export interface WalletAppPromoSummaryDto {
   totalCount: number;
   activeCount: number;
   offers: WalletAppPromoOfferDto[];
+  availableOfferCount?: number;
+  availableOffers?: WalletAppAvailableOfferDto[];
 }
 
 export interface WalletAppPromoOfferDto {
   customerOfferId: number;
   storeId: number;
   storeName: string;
+  offerId?: number;
   offerName: string;
   benefitText: string;
   code: string;
   qrPayload: string;
   channelText: string;
+  issuedReason?: string;
   issuedAtUtc: string;
   expiresAtUtc?: string | null;
   isInStoreRedeemable: boolean;
   isOnlineOrderRedeemable: boolean;
   isReservationRedeemable: boolean;
   storePhoneDisplay?: string;
+}
+
+export interface WalletAppAvailableOfferDto {
+  offerId: number;
+  storeId: number;
+  storeName: string;
+  offerName: string;
+  benefitText: string;
+  summary: string;
+  description: string;
+  terms: string;
+  actionText: string;
+  channelText: string;
+  startDateUtc?: string | null;
+  endDateUtc?: string | null;
+  requiresCustomerTracking: boolean;
+  requiresClaim: boolean;
+  firstVisitOnly: boolean;
+  alreadyInWallet: boolean;
+  alreadyRedeemed: boolean;
+  limitPerCustomer: number;
+  redemptionCount: number;
+  isInStoreRedeemable: boolean;
+  isOnlineOrderRedeemable: boolean;
+  isReservationRedeemable: boolean;
+  storePhoneDisplay?: string;
+  websiteUrl?: string;
+  homeUrl?: string;
+  displayOrder: number;
 }
 
 export interface WalletAppActivityDto {

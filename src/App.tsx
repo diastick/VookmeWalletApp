@@ -14,11 +14,11 @@ import {
 } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
 import { App as CapacitorApp } from '@capacitor/app';
-import { listOutline, personCircleOutline, ribbonOutline, walletOutline } from 'ionicons/icons';
+import { personCircleOutline, pricetagOutline, ribbonOutline, walletOutline } from 'ionicons/icons';
 import { useCallback, useEffect } from 'react';
 import LoginPage from './pages/LoginPage';
 import HomePage from './pages/HomePage';
-import ActivityPage from './pages/ActivityPage';
+import PromoPage from './pages/PromoPage';
 import StoresPage from './pages/StoresPage';
 import ProfilePage from './pages/ProfilePage';
 import TicketScannerPage from './pages/TicketScannerPage';
@@ -44,7 +44,7 @@ const WalletTabs: React.FC = () => (
   <IonTabs>
     <IonRouterOutlet>
       <Route exact path="/wallet/home" component={HomePage} />
-      <Route exact path="/wallet/activity" component={ActivityPage} />
+      <Route exact path="/wallet/promos" component={PromoPage} />
       <Route exact path="/wallet/stores" component={StoresPage} />
       <Route exact path="/wallet/profile" component={ProfilePage} />
       <Route exact path="/wallet/ticket-scan" component={TicketScannerPage} />
@@ -52,15 +52,22 @@ const WalletTabs: React.FC = () => (
     </IonRouterOutlet>
     <IonTabBar slot="bottom">
       <IonTabButton tab="home" href="/wallet/home"><IonIcon aria-hidden="true" icon={walletOutline} /><IonLabel>Wallet</IonLabel></IonTabButton>
-      <IonTabButton tab="activity" href="/wallet/activity"><IonIcon aria-hidden="true" icon={listOutline} /><IonLabel>Activity</IonLabel></IonTabButton>
+      <IonTabButton tab="promos" href="/wallet/promos"><IonIcon aria-hidden="true" icon={pricetagOutline} /><IonLabel>Promo</IonLabel></IonTabButton>
       <IonTabButton tab="stores" href="/wallet/stores"><IonIcon aria-hidden="true" icon={ribbonOutline} /><IonLabel>Network</IonLabel></IonTabButton>
       <IonTabButton tab="profile" href="/wallet/profile"><IonIcon aria-hidden="true" icon={personCircleOutline} /><IonLabel>Profile</IonLabel></IonTabButton>
     </IonTabBar>
   </IonTabs>
 );
 
+const allowedClaimHosts = new Set(['vookme.com', 'www.vookme.com', 'api.vookme.com']);
 
-const getRewardTicketPathFromUrl = (url: string): string | null => {
+const buildTicketClaimPath = (code: string | undefined): string | null => {
+  if (!code) return null;
+  const cleanCode = decodeURIComponent(code).trim();
+  return cleanCode ? `/ticket/claim/${encodeURIComponent(cleanCode)}` : null;
+};
+
+const getAppPathFromUrl = (url: string): string | null => {
   const value = (url || '').trim();
   if (!value) return null;
 
@@ -69,18 +76,34 @@ const getRewardTicketPathFromUrl = (url: string): string | null => {
     const host = parsed.hostname.toLowerCase();
     const path = parsed.pathname || '';
 
-    if (parsed.protocol === 'vookme:' && host === 'ticket') {
-      const match = path.match(/^\/claim\/([^?#/]+)/i);
-      return match?.[1] ? `/ticket/claim/${encodeURIComponent(decodeURIComponent(match[1]))}` : null;
+    // iOS/Android custom scheme examples:
+    // vookme://ticket/claim/rt.3.1.ABC
+    // vookme://wallet/home
+    if (parsed.protocol === 'vookme:') {
+      if (host === 'ticket') {
+        const match = path.match(/^\/claim\/([^?#/]+)/i);
+        return buildTicketClaimPath(match?.[1]);
+      }
+
+      if (host === 'wallet') {
+        if (/^\/home\/?$/i.test(path) || path === '') return '/wallet/home';
+        if (/^\/(?:activity|promos|promo|offers)\/?$/i.test(path)) return '/wallet/promos';
+        if (/^\/stores\/?$/i.test(path) || /^\/network\/?$/i.test(path)) return '/wallet/stores';
+        if (/^\/profile\/?$/i.test(path)) return '/wallet/profile';
+        if (/^\/ticket-scan\/?$/i.test(path)) return '/wallet/ticket-scan';
+      }
     }
 
-    if ((parsed.protocol === 'https:' || parsed.protocol === 'http:') && (host === 'vookme.com' || host === 'www.vookme.com' || host === 'api.vookme.com')) {
+    // iOS Universal Links / Android App Links examples:
+    // https://vookme.com/ticket/claim/rt.3.1.ABC
+    // https://vookme.com/reward/ticket/claim/rt.3.1.ABC
+    if ((parsed.protocol === 'https:' || parsed.protocol === 'http:') && allowedClaimHosts.has(host)) {
       const match = path.match(/^\/(?:reward\/ticket\/claim|ticket\/claim)\/([^?#/]+)/i);
-      return match?.[1] ? `/ticket/claim/${encodeURIComponent(decodeURIComponent(match[1]))}` : null;
+      return buildTicketClaimPath(match?.[1]);
     }
   } catch {
     const match = value.match(/\/(?:reward\/ticket\/claim|ticket\/claim)\/([^?#\s/]+)/i);
-    return match?.[1] ? `/ticket/claim/${encodeURIComponent(decodeURIComponent(match[1]))}` : null;
+    return buildTicketClaimPath(match?.[1]);
   }
 
   return null;
@@ -102,8 +125,8 @@ const AppRoutes: React.FC = () => {
   const history = useHistory();
   const { initialized, isAuthenticated } = useWalletAuth();
 
-  const openRewardTicketUrl = useCallback((url: string) => {
-    const path = getRewardTicketPathFromUrl(url);
+  const openAppUrl = useCallback((url: string) => {
+    const path = getAppPathFromUrl(url);
     if (path) history.replace(path);
   }, [history]);
 
@@ -113,14 +136,14 @@ const AppRoutes: React.FC = () => {
 
     CapacitorApp.getLaunchUrl()
       .then((launch) => {
-        if (!cancelled && launch?.url) openRewardTicketUrl(launch.url);
+        if (!cancelled && launch?.url) openAppUrl(launch.url);
       })
       .catch(() => {
         // Ignore launch-url lookup errors. Regular routing still works.
       });
 
     CapacitorApp.addListener('appUrlOpen', ({ url }) => {
-      openRewardTicketUrl(url);
+      openAppUrl(url);
     })
       .then((listener) => {
         if (cancelled) listener.remove();
@@ -134,7 +157,7 @@ const AppRoutes: React.FC = () => {
       cancelled = true;
       if (removeListener) removeListener();
     };
-  }, [openRewardTicketUrl]);
+  }, [openAppUrl]);
 
   if (!initialized) return <OpeningWalletPage />;
 

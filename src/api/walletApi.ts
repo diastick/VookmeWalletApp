@@ -168,8 +168,9 @@ export const walletApi = {
     return request<WalletAppHomeResponse>(baseUrl, '/api/wallet/home', { method: 'GET' }, accessToken);
   },
 
-  activity(baseUrl: string, accessToken: string) {
-    return request<WalletAppActivityDto[]>(baseUrl, '/api/wallet/activity', { method: 'GET' }, accessToken);
+  activity(baseUrl: string, accessToken: string, take = 80) {
+    const safeTake = Math.max(1, Math.min(100, Math.trunc(take || 80)));
+    return request<WalletAppActivityDto[]>(baseUrl, `/api/wallet/activity?take=${safeTake}`, { method: 'GET' }, accessToken);
   },
 
   qr(baseUrl: string, accessToken: string) {

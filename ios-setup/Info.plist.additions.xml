@@ -1,0 +1,16 @@
+<!-- Add these inside the top-level <dict> in ios/App/App/Info.plist -->
+
+<key>NSCameraUsageDescription</key>
+<string>Vookme Wallet uses the camera to scan reward ticket QR codes.</string>
+
+<key>CFBundleURLTypes</key>
+<array>
+  <dict>
+    <key>CFBundleURLName</key>
+    <string>com.vookme.wallet</string>
+    <key>CFBundleURLSchemes</key>
+    <array>
+      <string>vookme</string>
+    </array>
+  </dict>
+</array>

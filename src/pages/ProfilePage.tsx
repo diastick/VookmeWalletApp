@@ -42,7 +42,8 @@ const ProfilePage: React.FC = () => {
 
     setSaving(true);
     try {
-      await updateCustomerProfile(trimmedName);
+      const updatedCustomer = await updateCustomerProfile(trimmedName);
+      setDisplayName(updatedCustomer.displayName || trimmedName);
       setToastMessage('Profile updated.');
     } catch (error) {
       setToastMessage(error instanceof Error ? error.message : 'Profile could not be updated.');
@@ -92,11 +93,11 @@ const ProfilePage: React.FC = () => {
               <IonList className="wallet-clean-list">
                 <IonItem lines="full">
                   <IonIcon icon={phonePortraitOutline} slot="start" />
-                  <IonLabel><h3>Phone</h3><p>{customer?.phoneMasked || 'Not saved'}</p></IonLabel>
+                  <IonLabel><h3>Phone</h3><p>{customer?.phoneDisplay || customer?.phoneMasked || 'Not saved'}</p></IonLabel>
                 </IonItem>
                 <IonItem lines="full">
                   <IonIcon icon={mailOutline} slot="start" />
-                  <IonLabel><h3>Email</h3><p>{customer?.emailMasked || 'Not saved'}</p></IonLabel>
+                  <IonLabel><h3>Email</h3><p>{customer?.emailDisplay || customer?.emailMasked || 'Not saved'}</p></IonLabel>
                 </IonItem>
                 <IonItem lines="none">
                   <IonIcon icon={shieldCheckmarkOutline} slot="start" />

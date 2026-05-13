@@ -46,7 +46,7 @@ const getScanErrorMessage = (error: unknown): string => {
   }
 
   if (lower.includes('not implemented') || lower.includes('notimplemented')) {
-    return 'Native scanner is not available in this build. Install the Capacitor barcode scanner plugin and sync the Android project.';
+    return 'Native scanner is not available in this build. Install the Capacitor barcode scanner plugin and sync the native project.';
   }
 
   return 'Unable to start the native scanner. Try again or paste the ticket code.';
@@ -99,6 +99,9 @@ const TicketScannerPage: React.FC = () => {
         scanOrientation: 1,
         android: {
           scanningLibrary: 'zxing',
+        },
+        ios: {
+          scanningLibrary: 'avFoundation',
         },
         web: {
           showCameraSelection: true,

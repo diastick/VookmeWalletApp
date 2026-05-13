@@ -1,0 +1,14 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "TEAMID.com.vookme.wallet",
+        "paths": [
+          "/ticket/claim/*",
+          "/reward/ticket/claim/*"
+        ]
+      }
+    ]
+  }
+}

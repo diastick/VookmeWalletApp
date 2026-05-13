@@ -1413,3 +1413,535 @@
     --background: #0b1120;
   }
 }
+
+/* Vookme customer app Apple Wallet style refinements */
+.wallet-pass-stack-overlap {
+  padding: 6px 0 116px;
+}
+
+.wallet-pass-stack-overlap .wallet-pass {
+  min-height: 96px;
+  padding: 17px 18px;
+  border-radius: 26px;
+}
+
+.wallet-pass-stack-overlap .wallet-pass + .wallet-pass {
+  margin-top: -50px;
+}
+
+.wallet-pass-stack-overlap .wallet-pass-expanded {
+  min-height: 0;
+  margin: 12px 0 18px;
+  padding: 20px;
+}
+
+.wallet-pass-stack-overlap .wallet-pass-expanded + .wallet-pass {
+  margin-top: 12px;
+}
+
+.wallet-pass-title-block {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.wallet-pass-main-row {
+  align-items: center;
+  margin-top: 4px;
+  padding-right: 0;
+}
+
+.wallet-pass-main-row h2 {
+  max-width: none;
+  margin: 0;
+  font-size: 21px;
+  line-height: 1.08;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wallet-pass-stack-overlap .wallet-pass:not(.wallet-pass-expanded) .wallet-pass-main-row h2 {
+  display: block;
+  -webkit-line-clamp: unset;
+  -webkit-box-orient: unset;
+}
+
+.wallet-pass-expanded .wallet-pass-main-row {
+  align-items: flex-start;
+  padding-right: 40px;
+}
+
+.wallet-pass-expanded .wallet-pass-main-row h2 {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  font-size: 24px;
+  line-height: 1.08;
+}
+
+.wallet-pass-title-block p {
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 1.35;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.wallet-pass-value-block {
+  flex: 0 0 auto;
+  min-width: 92px;
+}
+
+.wallet-pass-value-block strong {
+  font-size: 21px;
+  white-space: nowrap;
+}
+
+.wallet-pass-expanded .wallet-pass-value-block strong {
+  font-size: 24px;
+}
+
+.wallet-pass-close-button {
+  position: absolute;
+  z-index: 5;
+  top: 10px;
+  right: 10px;
+  width: 36px;
+  height: 36px;
+  min-height: 36px;
+  --padding-start: 0;
+  --padding-end: 0;
+  --border-radius: 999px;
+  --color: #fff;
+  --background-hover: rgba(255, 255, 255, 0.18);
+}
+
+.wallet-pass-expanded-body {
+  margin-top: 16px;
+  padding: 14px;
+  border-radius: 20px;
+}
+
+.wallet-pass-qr-area {
+  min-height: 164px;
+  margin-bottom: 12px;
+}
+
+.wallet-pass-qr-area svg {
+  width: min(146px, 50vw);
+  height: min(146px, 50vw);
+}
+
+.wallet-pass-detail-grid-compact {
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.wallet-pass-detail-grid-compact > div {
+  padding: 10px 12px;
+}
+
+.wallet-pass-use-note {
+  margin: 2px 2px 12px;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.wallet-pass-activity-panel {
+  margin-top: 12px;
+  border-top: 1px solid rgba(148, 163, 184, 0.28);
+  padding-top: 12px;
+}
+
+.wallet-pass-activity-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.wallet-pass-activity-title-row h3 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 15px;
+  font-weight: 850;
+}
+
+.wallet-pass-activity-title-row span {
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.wallet-pass-activity-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.95);
+}
+
+.wallet-pass-activity-row:last-of-type {
+  border-bottom: 0;
+}
+
+.wallet-pass-activity-row strong {
+  display: block;
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.wallet-pass-activity-row span {
+  display: block;
+  margin-top: 2px;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.wallet-pass-activity-row time {
+  flex: 0 0 auto;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.wallet-pass-empty-activity {
+  margin: 8px 0 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.wallet-pass-view-more-button {
+  margin-top: 4px;
+  --padding-start: 0;
+  --padding-end: 0;
+  font-weight: 800;
+}
+
+.reward-pass-emerald { background: linear-gradient(135deg, #059669, #047857 58%, #064e3b); }
+.reward-pass-cyan { background: linear-gradient(135deg, #0891b2, #0e7490 58%, #164e63); }
+.reward-pass-navy { background: linear-gradient(135deg, #334155, #1e40af 58%, #0f172a); }
+.gift-pass-violet { background: linear-gradient(135deg, #6d28d9, #4c1d95 58%, #111827); }
+.promo-pass-red { background: linear-gradient(135deg, #dc2626, #be123c 58%, #4c0519); }
+
+.wallet-promo-wrap {
+  max-width: 620px;
+}
+
+.wallet-promo-header {
+  margin: 2px 2px 16px;
+}
+
+.wallet-promo-header h1 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 32px;
+  font-weight: 850;
+  letter-spacing: -0.05em;
+}
+
+.wallet-promo-header p {
+  margin: 6px 0 0;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.wallet-promo-list {
+  display: grid;
+  gap: 12px;
+}
+
+.wallet-promo-list-card {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 12px 30px rgba(15,23,42,.06);
+  text-align: left;
+}
+
+.wallet-promo-list-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff7ed;
+  color: #ea580c;
+  font-size: 22px;
+}
+
+.wallet-promo-list-main {
+  min-width: 0;
+}
+
+.wallet-promo-list-main span,
+.wallet-promo-list-end span {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.wallet-promo-list-main strong {
+  display: block;
+  margin-top: 3px;
+  color: #0f172a;
+  font-size: 16px;
+  font-weight: 850;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wallet-promo-list-main p {
+  margin: 3px 0 0;
+  color: #475569;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wallet-promo-list-end {
+  text-align: right;
+  max-width: 92px;
+}
+
+.wallet-promo-detail-card {
+  position: relative;
+  margin: 0;
+  border-radius: 26px;
+  overflow: hidden;
+  color: #fff;
+  background: linear-gradient(135deg, #ea580c, #be123c 58%, #581c87);
+  box-shadow: 0 24px 58px rgba(15, 23, 42, 0.22);
+}
+
+.wallet-promo-detail-card ion-card-content {
+  padding: 24px 18px 18px;
+}
+
+.wallet-promo-detail-close {
+  position: absolute;
+  z-index: 4;
+  top: 10px;
+  right: 10px;
+  width: 36px;
+  height: 36px;
+  min-height: 36px;
+  --padding-start: 0;
+  --padding-end: 0;
+  --border-radius: 999px;
+  --color: #fff;
+  --background-hover: rgba(255, 255, 255, 0.18);
+}
+
+.wallet-promo-detail-card h1 {
+  margin: 10px 42px 2px 0;
+  font-size: 28px;
+  line-height: 1.05;
+  font-weight: 850;
+  letter-spacing: -0.04em;
+}
+
+.wallet-promo-store-name {
+  margin: 0 0 14px;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.wallet-promo-benefit-box {
+  margin: 0 0 14px;
+  padding: 13px 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.16);
+  font-size: 18px;
+  font-weight: 850;
+}
+
+.wallet-promo-qr-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 170px;
+  margin-bottom: 12px;
+  border-radius: 20px;
+  background: #fff;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.wallet-promo-qr-box svg {
+  width: min(150px, 52vw);
+  height: min(150px, 52vw);
+}
+
+.wallet-promo-detail-note {
+  margin: 4px 2px 0;
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.wallet-promo-detail-card .wallet-pass-detail-grid > div {
+  background: rgba(255, 255, 255, 0.96);
+}
+
+
+.wallet-promo-segment {
+  margin: 0 0 16px;
+  padding: 4px;
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.72);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+}
+
+.wallet-promo-segment ion-segment-button {
+  min-height: 38px;
+  --border-radius: 13px;
+  --indicator-color: rgba(255, 255, 255, 0.18);
+  --indicator-box-shadow: none;
+  --color: rgba(255, 255, 255, 0.82);
+  --color-checked: #ffffff;
+  color: #ffffff;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+}
+
+.wallet-promo-segment ion-segment-button ion-label {
+  color: #ffffff !important;
+  font-weight: 900;
+}
+
+.wallet-promo-empty-button {
+  margin-top: 14px;
+}
+
+.wallet-offer-list-card .wallet-promo-list-icon {
+  background: #ecfeff;
+  color: #0891b2;
+}
+
+.wallet-offer-track-note {
+  display: inline-flex;
+  margin-top: 6px;
+  color: #0f766e;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.wallet-offer-used {
+  opacity: 0.72;
+}
+
+.wallet-offer-detail-card {
+  background: linear-gradient(135deg, #0f766e, #2563eb 58%, #1e1b4b);
+}
+
+.wallet-offer-description {
+  margin: 0 0 14px;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.wallet-offer-action-box {
+  margin: 0 0 14px;
+  padding: 13px 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.wallet-offer-action-box strong,
+.wallet-offer-action-box span {
+  display: block;
+}
+
+.wallet-offer-action-box strong {
+  color: #fff;
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.wallet-offer-action-box span {
+  margin-top: 5px;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.wallet-offer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.wallet-offer-actions ion-button {
+  flex: 1 1 110px;
+  --border-color: rgba(255, 255, 255, 0.58);
+  --color: #ffffff;
+}
+
+@media (max-width: 420px) {
+  .wallet-pass-stack-overlap .wallet-pass {
+    min-height: 92px;
+    padding: 16px;
+  }
+
+  .wallet-pass-stack-overlap .wallet-pass + .wallet-pass {
+    margin-top: -48px;
+  }
+
+  .wallet-pass-main-row h2 {
+    font-size: 19px;
+  }
+
+  .wallet-pass-value-block strong {
+    font-size: 19px;
+  }
+
+  .wallet-promo-list-card {
+    grid-template-columns: 40px 1fr;
+  }
+
+  .wallet-promo-list-end {
+    grid-column: 2;
+    text-align: left;
+    max-width: none;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .wallet-pass-activity-title-row h3,
+  .wallet-pass-activity-row strong,
+  .wallet-promo-header h1,
+  .wallet-promo-list-main strong {
+    color: #f8fafc;
+  }
+
+  .wallet-promo-list-card {
+    background: #111827;
+    border-color: rgba(148, 163, 184, 0.18);
+  }
+
+  .wallet-promo-list-icon {
+    background: rgba(249, 115, 22, 0.16);
+  }
+
+  .wallet-pass-activity-row {
+    border-bottom-color: rgba(55, 65, 81, 0.9);
+  }
+}
